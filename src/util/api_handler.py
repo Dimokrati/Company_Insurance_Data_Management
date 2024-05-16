@@ -1,3 +1,4 @@
+from util.config_handler import ConfigHandler
 import pandas as pd
 import requests
 import logging
@@ -6,8 +7,10 @@ LOGGER = logging.getLogger(__name__)
 
 class ApiHandler:
     """Class for API Handling Functionalities."""
-    def __init__(self):
-        self.api_url = "https://my.api.mockaroo.com/policy_sales.json?key=07cac880"   # TODO: Add the config file
+    def __init__(self, api_name):
+        self.api_name = api_name
+        self.config_handler = ConfigHandler()
+        self.api_url = self.config_handler.get_api_url(self.api_name) # extracting the api_url from the config
 
     def fetch_data(self):
         """

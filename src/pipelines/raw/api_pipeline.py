@@ -1,12 +1,12 @@
 from util.api_handler import ApiHandler
 import logging
 
-logging.basicConfig(level = logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
 class ApiPipeline:
-    def __init__(self):
-        self.api_handler = ApiHandler()
+    def __init__(self, api_name):
+        self.api_name = api_name
+        self.api_handler = ApiHandler(self.api_name)
 
     def run_pipeline(self):
         LOGGER.info("calling the api")

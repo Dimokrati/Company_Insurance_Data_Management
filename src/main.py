@@ -1,7 +1,17 @@
 from pipelines.raw.api_pipeline import ApiPipeline
+import logging
 
-api_pipeline = ApiPipeline()
+logging.basicConfig(level = logging.INFO)
+LOGGER = logging.getLogger(__name__)
 
-df_data = api_pipeline.run_pipeline()
+api_pipeline = ApiPipeline("API-1")
 
-print(df_data)
+
+def main():
+    LOGGER.info("Starting the management process")
+    df_data = api_pipeline.run_pipeline()
+    print(df_data)
+
+
+if __name__ == "__main__":
+    main()
