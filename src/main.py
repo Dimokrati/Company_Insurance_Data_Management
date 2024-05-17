@@ -9,8 +9,8 @@ api_pipeline = ApiPipeline("API-1")
 
 def main():
     LOGGER.info("Starting the management process")
-    df_data = api_pipeline.run_pipeline()
-    print(df_data)
+    api_pipeline.run_pipeline()
+    
 
 
 if __name__ == "__main__":

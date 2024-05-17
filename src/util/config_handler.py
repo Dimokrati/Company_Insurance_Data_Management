@@ -10,6 +10,13 @@ class ConfigHandler:
         self.config.read(self.config_path)
 
     def get_api_url(self, api_name):
-        """Extracts API Url from config file."""
+        """Extracting API Url from config file."""
         return self.config.get(api_name, 'url')
     
+    def get_db_params(self, db_name):
+        """Extracting the db params from config file"""
+        return {param: self.config.get(db_name, param) for param in self.config.options(db_name)}
+    
+    def get_prefixes(self, prfx_name):
+        """Extracting the prefixes from config file"""
+        return eval(self.config.get(prfx_name, 'prefixes'))
