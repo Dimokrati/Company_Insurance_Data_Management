@@ -1,5 +1,6 @@
 import pandas as pd
 import logging
+from datetime import datetime
 from sqlalchemy import create_engine, text
 from util.config_handler import ConfigHandler
 
@@ -27,12 +28,40 @@ class DbHandler:
             split_dfs[prefix].columns = [col[len(prefix)+1:] for col in columns]  # Remove prefix from column names
         return split_dfs
     
-    # columns = [vehicles_vehicle_key, vehicles_registration_type,.....]
-    # split_dfs = {'vehicles': df[columns], }
+    def create_date_data(self):
+        today = datetime.now().date()
+        
+        day = today.day
+        month = today.month
+        year = today.year
+        day_of_week = today.weekday()  # Monday is 0 and Sunday is 6
+        day_of_month = today.day
+        day_of_year = today.timetuple().tm_yday
+        week_of_year = today.isocalendar()[1]
+        quarter = (today.month - 1) // 3 + 1
+
+        # Create a list of dictionaries with the same values for all 7 rows
+        data = [{
+            'date': today,
+            'day': day,
+            'month': month,
+            'year': year,
+            'day_of_weak': day_of_week,
+            'day_of_month': day_of_month,
+            'day_of_year': day_of_year,
+            'week_of_year': week_of_year,
+            'quarter': quarter
+        } for _ in range(7)]
+        
+        df = pd.DataFrame(data)
+        return df
     
     def insert_data(self, df, prefixes, schema_name):
         """Insert the split DataFrames into their respective tables."""
         split_dfs = self.split_dataframe_by_prefix(df, prefixes.keys())
+        date_data = self.create_date_data()
+        date_data.to_sql("raw_dates", self.engine, schema = schema_name, if_exists='append', index=False)
+        LOGGER.info("Inserted data into table raw_dates")
         for prefix, table_name in prefixes.items():
             split_dfs[prefix].to_sql(table_name, self.engine, schema = schema_name, if_exists='append', index=False)
             LOGGER.info(f"Inserted data into table {table_name}")
