@@ -56,15 +56,30 @@ class DbHandler:
         df = pd.DataFrame(data)
         return df
     
-    def insert_data(self, df, prefixes, schema_name):
+    def insert_data(self, df, table_name, schema_name):
         """Insert the split DataFrames into their respective tables."""
-        split_dfs = self.split_dataframe_by_prefix(df, prefixes.keys())
+        # split_dfs = self.split_dataframe_by_prefix(df, prefixes.keys())
         date_data = self.create_date_data()
-        date_data.to_sql("raw_dates", self.engine, schema = schema_name, if_exists='append', index=False)
-        LOGGER.info("Inserted data into table raw_dates")
-        for prefix, table_name in prefixes.items():
-            split_dfs[prefix].to_sql(table_name, self.engine, schema = schema_name, if_exists='append', index=False)
-            LOGGER.info(f"Inserted data into table {table_name}")
-        LOGGER.info("All data has been successfully saved to PostgreSQL!")
+        # date_data.to_sql("raw_dates", self.engine, schema = schema_name, if_exists='append', index=False)
+        # LOGGER.info("Inserted data into table raw_dates")
+        # for prefix, table_name in prefixes.items():
+            # split_dfs[prefix].to_sql(table_name, self.engine, schema = schema_name, if_exists='append', index=False)
+        res_df = pd.concat([df,date_data], axis=1)
+        res_df.to_sql(table_name, self.engine, schema=schema_name, if_exists='append', index=False)
+        LOGGER.info(f"Inserted data into table raw_data")
+        
+
+
+    def extract_data(self,engine, table):
+        query = f"SELECT * FROM {table};"
+        df = pd.read_sql(query, engine)
+        return df
+    
+    def remove_duplicates(self,df):
+        return df.drop_duplicates()
+    
+
+    def insert_unique_data(self):
+        pass
 
         
