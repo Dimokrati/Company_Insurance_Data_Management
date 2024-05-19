@@ -11,7 +11,7 @@ api_transform_pipeline = ApiTransformPipeline()
 
 def main():
     LOGGER.info("Starting the management process")
-    # api_pipeline.run_pipeline()
+    api_pipeline.run_pipeline()
     api_transform_pipeline.run_pipeline()
     
 
