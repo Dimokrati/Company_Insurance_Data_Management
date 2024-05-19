@@ -14,7 +14,7 @@ class ApiPipeline:
         self.db_handler = DbHandler("insurance_company")
 
     def run_pipeline(self):
-        LOGGER.info("calling the api")
+        LOGGER.info("Starting the api pipeline")
         data = self.api_handler.fetch_data() # calling the fetch_data method to get the data
         # raw_prefixes = self.config_handler.get_prefixes("raw_tables_prefixes")
         self.db_handler.insert_data(data, "raw_data", "raw")

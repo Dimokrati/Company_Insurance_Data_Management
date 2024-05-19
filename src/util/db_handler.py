@@ -42,15 +42,15 @@ class DbHandler:
 
         # Create a list of dictionaries with the same values for all 7 rows
         data = [{
-            'date': today,
-            'day': day,
-            'month': month,
-            'year': year,
-            'day_of_weak': day_of_week,
-            'day_of_month': day_of_month,
-            'day_of_year': day_of_year,
-            'week_of_year': week_of_year,
-            'quarter': quarter
+            'dates_date': today,
+            'dates_day': day,
+            'dates_month': month,
+            'dates_year': year,
+            'dates_day_of_weak': day_of_week,
+            'dates_day_of_month': day_of_month,
+            'dates_day_of_year': day_of_year,
+            'dates_week_of_year': week_of_year,
+            'dates_quarter': quarter
         } for _ in range(7)]
         
         df = pd.DataFrame(data)
@@ -70,8 +70,8 @@ class DbHandler:
         
 
 
-    def extract_data(self,engine, table):
-        query = f"SELECT * FROM {table};"
+    def extract_data(self,engine):
+        query = self.config_handler.get_raw_data_query("query_raw_data")
         df = pd.read_sql(query, engine)
         return df
     
@@ -79,7 +79,16 @@ class DbHandler:
         return df.drop_duplicates()
     
 
-    def insert_unique_data(self):
-        pass
+    def insert_unique_data(self, prefixes, schema_name = "curated"):
+        raw_data = self.extract_data(self.engine)
+        unique_data = self.remove_duplicates(raw_data)
+        split_dfs = self.split_dataframe_by_prefix(unique_data, prefixes.keys())
+
+        # date_data.to_sql("raw_dates", self.engine, schema = schema_name, if_exists='append', index=False)
+        # LOGGER.info("Inserted data into table raw_dates")
+        for prefix, table_name in prefixes.items():
+            split_dfs[prefix].to_sql(table_name, self.engine, schema = schema_name, if_exists='append', index=False)
+            LOGGER.info(f"Inserted data in table {table_name}")
+        LOGGER.info(f"All data saved succesfully")
 
         

@@ -33,7 +33,7 @@ class ApiHandler:
             if isinstance(data, list):     
                 data = data[0]             # If data is a list, assume it contains only one element
             # Initialize an empty DataFrame
-            dfs = list(map(lambda category: pd.json_normalize(data[category]), data)) # you remove .add_prefix(category+'_') 
+            dfs = list(map(lambda category: pd.json_normalize(data[category]).add_prefix(category+'_'), data)) 
             # Concatenate the flattened DataFrames
             df = pd.concat(dfs, axis=1)    
             return df

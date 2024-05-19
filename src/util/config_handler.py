@@ -17,6 +17,10 @@ class ConfigHandler:
         """Extracting the db params from config file"""
         return {param: self.config.get(db_name, param) for param in self.config.options(db_name)}
     
-    # def get_prefixes(self, prfx_name):
-    #     """Extracting the prefixes from config file"""
-    #     return eval(self.config.get(prfx_name, 'prefixes'))
+    def get_prefixes(self, prfx_name):
+        """Extracting the prefixes from config file"""
+        return eval(self.config.get(prfx_name, 'prefixes'))
+    
+    def get_raw_data_query(self, query_name):
+        """Extracting the query from config file"""
+        return self.config.get(query_name, 'query')
