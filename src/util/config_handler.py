@@ -24,3 +24,7 @@ class ConfigHandler:
     def get_raw_data_query(self, query_name):
         """Extracting the query from config file"""
         return self.config.get(query_name, 'query')
+    
+    def get_tables_names(self, tables):
+        """Extracting the tables names from config file"""
+        return eval(self.config.get(tables, 'tables'))

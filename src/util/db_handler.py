@@ -168,4 +168,74 @@ class DbHandler:
             LOGGER.info(f"Inserted data in table {table_name}")
         LOGGER.info(f"All data saved succesfully")
 
-        
+ ###### DW DIMENSION FUNCTIONS ######
+    def extract_data_dw(self, engine, table_name):
+        query = f"SELECT * FROM curated.curated_{table_name};"
+        df = pd.read_sql(query, engine)
+        return df
+
+    def get_existing_data_dw(self, engine, table_name):
+        query = f"SELECT * FROM insurance_dw.dim_{table_name};"
+        existing_df = pd.read_sql(query, engine)
+        return existing_df
+
+    def insert_data_dw(self, engine, df, table_name):
+        df.to_sql(f'dim_{table_name}', engine, schema='insurance_dw', if_exists='append', index=False)
+
+    def remove_duplicates_dw(self,df, existing_df):
+        # Identify new rows that are not in existing_df
+        merged_df = df.merge(existing_df, indicator=True, how='left')
+        new_df = merged_df[merged_df['_merge'] == 'left_only']
+        return new_df.drop(columns='_merge')
+    
+    def powering_dims_dw(self):
+        for table in self.config_handler.get_tables_names("tables_names"):
+            print(f"Processing table: {table}")
+            
+            # Extract data from curated schema
+            df = self.extract_data_dw(self.engine, table)
+            print(f"Extracted {len(df)} rows from curated.curated_{table}")
+            
+            # Get existing data from dw schema
+            existing_df = self.get_existing_data_dw(self.engine, table)
+            print(f"Fetched {len(existing_df)} existing rows from insurance_dw.dim_{table}")
+            
+            # Remove duplicates
+            df_cleaned = self.remove_duplicates_dw(df, existing_df)
+            print(f"Cleaned data has {len(df_cleaned)} rows to be inserted into dw.dim_{table}")
+            
+            # Insert data
+            if not df_cleaned.empty:
+                self.insert_data_dw(self.engine, df_cleaned, table)
+                print(f"Inserted {len(df_cleaned)} rows into dw.dim_{table}")
+            else:
+                print(f"No new data to insert into dw.dim_{table}")
+
+ ###### DW FACT FUNCTIONS ######
+
+    def extract_data_from_dims(self, engine):
+        df_policy_keys = pd.read_sql("SELECT policy_key FROM curated.curated_policies", engine)
+        df_product_keys = pd.read_sql("SELECT product_key FROM curated.curated_products", engine)
+        df_vehicle_keys = pd.read_sql("SELECT vehicle_key FROM curated.curated_vehicles", engine)
+        df_agency_keys = pd.read_sql("SELECT agency_key FROM curated.curated_agencies", engine)
+        df_policyholder_keys = pd.read_sql("SELECT policyholder_key FROM curated.curated_policyholders", engine)
+        df_date_keys = pd.read_sql("SELECT date_key FROM curated.curated_dates", engine)
+        df_premimum_amount = pd.read_sql("SELECT premium_amount AS policy_sales_amount FROM curated.curated_policies",engine)
+        return pd.concat([df_policy_keys,df_product_keys,df_vehicle_keys,df_agency_keys,df_policyholder_keys,df_date_keys,df_premimum_amount], axis=1)
+    
+    def extract_existing_fact_data(self,engine):
+        return pd.read_sql("SELECT policy_key, product_key, vehicle_key, agency_key, policyholder_key, date_key, policy_sales_amount FROM insurance_dw.policy_sales_fact", engine)
+    
+    def remove_duplicates_fact(self,df,existing_df):
+        merged_df = df.merge(existing_df, indicator=True, how='left')
+        new_df = merged_df[merged_df['_merge'] == 'left_only']
+        new_clean_df = new_df.drop(columns='_merge')
+        return new_clean_df
+    
+    def powering_fact_dw(self):
+        keys_df = self.extract_data_from_dims(self.engine)
+        existing_df = self.extract_existing_fact_data(self.engine)
+        clean_df = self.remove_duplicates_fact(keys_df, existing_df)
+        clean_df.to_sql('policy_sales_fact', self.engine, schema = 'insurance_dw', if_exists='append', index=False)
+
+
