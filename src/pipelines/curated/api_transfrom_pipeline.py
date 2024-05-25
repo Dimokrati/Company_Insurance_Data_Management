@@ -5,13 +5,13 @@ from util.db_handler import DbHandler
 LOGGER = logging.getLogger(__name__)
 
 
-class ApiTransformPipeline:
+class TransformPipeline:
     """class responsible of running the api transform pipeline"""
     def __init__(self):
         self.config_handler = ConfigHandler()
         self.db_handler = DbHandler("insurance_company")
 
-    def run_pipeline(self):
+    def run_transform_pipeline(self):
         """function runs the pipeline"""
         LOGGER.info("Starting the api transform pipeline")
         curated_prefixes = self.config_handler.get_prefixes("curated_tables_prefixes")

@@ -95,15 +95,22 @@ class DbHandler:
             table_name (str): The name of the table to insert data into.
             schema_name (str): The name of the schema where the table resides.
         """
-        # split_dfs = self.split_dataframe_by_prefix(df, prefixes.keys())
-        date_data = self.create_date_data()
-        # date_data.to_sql("raw_dates", self.engine, schema = schema_name, if_exists='append', index=False)
-        # LOGGER.info("Inserted data into table raw_dates")
-        # for prefix, table_name in prefixes.items():
-            # split_dfs[prefix].to_sql(table_name, self.engine, schema = schema_name, if_exists='append', index=False)
-        res_df = pd.concat([df,date_data], axis=1)
-        res_df.to_sql(table_name, self.engine, schema=schema_name, if_exists='append', index=False)
-        LOGGER.info(f"Inserted data into table raw_data")
+        # Create connection
+        connection = self.engine.connect()
+
+        try:
+            # split_dfs = self.split_dataframe_by_prefix(df, prefixes.keys())
+            date_data = self.create_date_data()
+            # date_data.to_sql("raw_dates", connection, schema=schema_name, if_exists='append', index=False)
+            # LOGGER.info("Inserted data into table raw_dates")
+            # for prefix, table_name in prefixes.items():
+            #     split_dfs[prefix].to_sql(table_name, connection, schema=schema_name, if_exists='append', index=False)
+            res_df = pd.concat([df, date_data], axis=1)
+            res_df.to_sql(table_name, connection, schema=schema_name, if_exists='append', index=False)
+            LOGGER.info(f"Inserted data into table {table_name} in schema {schema_name}")
+        finally:
+            # Close connection
+            connection.close()
         
 
 
@@ -190,26 +197,26 @@ class DbHandler:
     
     def powering_dims_dw(self):
         for table in self.config_handler.get_tables_names("tables_names"):
-            print(f"Processing table: {table}")
+            LOGGER.info(f"Processing table: {table}")
             
             # Extract data from curated schema
             df = self.extract_data_dw(self.engine, table)
-            print(f"Extracted {len(df)} rows from curated.curated_{table}")
+            LOGGER.info(f"Extracted {len(df)} rows from curated.curated_{table}")
             
             # Get existing data from dw schema
             existing_df = self.get_existing_data_dw(self.engine, table)
-            print(f"Fetched {len(existing_df)} existing rows from insurance_dw.dim_{table}")
+            LOGGER.info(f"Fetched {len(existing_df)} existing rows from insurance_dw.dim_{table}")
             
             # Remove duplicates
             df_cleaned = self.remove_duplicates_dw(df, existing_df)
-            print(f"Cleaned data has {len(df_cleaned)} rows to be inserted into dw.dim_{table}")
+            LOGGER.info(f"Cleaned data has {len(df_cleaned)} rows to be inserted into dw.dim_{table}")
             
             # Insert data
             if not df_cleaned.empty:
                 self.insert_data_dw(self.engine, df_cleaned, table)
-                print(f"Inserted {len(df_cleaned)} rows into dw.dim_{table}")
+                LOGGER.info(f"Inserted {len(df_cleaned)} rows into dw.dim_{table}")
             else:
-                print(f"No new data to insert into dw.dim_{table}")
+                LOGGER.info(f"No new data to insert into dw.dim_{table}")
 
  ###### DW FACT FUNCTIONS ######
 
@@ -234,8 +241,12 @@ class DbHandler:
     
     def powering_fact_dw(self):
         keys_df = self.extract_data_from_dims(self.engine)
+        LOGGER.info("Extracting the wanted columns from curated data")
         existing_df = self.extract_existing_fact_data(self.engine)
+        LOGGER.info("Extracting the existing data in the fact table")
         clean_df = self.remove_duplicates_fact(keys_df, existing_df)
+        LOGGER.info("Cleaning the data by removing duplicates")
         clean_df.to_sql('policy_sales_fact', self.engine, schema = 'insurance_dw', if_exists='append', index=False)
+        LOGGER.info("Data got inserted into fact table")
 
 

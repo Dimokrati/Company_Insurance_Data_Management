@@ -6,15 +6,15 @@ import logging
 
 LOGGER = logging.getLogger(__name__)
 
-class ApiPipeline:
+class ExtractPipeline:
     def __init__(self, api_name):
         self.api_name = api_name
         self.config_handler = ConfigHandler()
         self.api_handler = ApiHandler(self.api_name)
         self.db_handler = DbHandler("insurance_company")
 
-    def run_pipeline(self):
-        LOGGER.info("Starting the api pipeline")
+    def run_extract_pipeline(self):
+        LOGGER.info("Starting the extract pipeline")
         data = self.api_handler.fetch_data() # calling the fetch_data method to get the data
         # raw_prefixes = self.config_handler.get_prefixes("raw_tables_prefixes")
         self.db_handler.insert_data(data, "raw_data", "raw")
